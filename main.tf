@@ -74,7 +74,7 @@ data "aws_iam_policy_document" "s3_policy_frontend" {
 
     condition {
       test     = "StringEquals"
-      variable = "aws:SourceArn"
+      variable = "AWS:SourceArn"
       values   = [aws_cloudfront_distribution.frontend.arn]
     }
   }
@@ -114,7 +114,7 @@ resource "aws_s3_bucket_acl" "cw_bucket_acl" {
 
 data "aws_iam_policy_document" "s3_policy_cw" {
   statement {
-    actions   = [
+    actions = [
       "s3:GetObject",
       "s3:PutObject",
       "s3:ListBucket",
@@ -188,6 +188,8 @@ resource "aws_cloudfront_distribution" "frontend" {
   comment             = "S3 bucket distribution"
   default_root_object = "index.html"
 
+  aliases = ["www.${var.frontend_domain_name}", "${var.frontend_domain_name}"]
+
   origin {
     domain_name              = aws_s3_bucket.frontend_bucket.bucket_regional_domain_name
     origin_id                = local.s3_origin_id
@@ -214,7 +216,7 @@ resource "aws_cloudfront_distribution" "frontend" {
   viewer_certificate {
     acm_certificate_arn      = aws_acm_certificate.frontend_cert.arn
     ssl_support_method       = "sni-only"
-    minimum_protocol_version = "TLSv1.2_2018"
+    minimum_protocol_version = "TLSv1.2_2021"
   }
 
   logging_config {
@@ -235,13 +237,9 @@ resource "aws_cloudfront_distribution" "frontend" {
 resource "aws_route53_record" "frontend" {
   zone_id = var.hosted_zone_id
   name    = var.frontend_domain_name
-  type    = "A"
+  type    = "CNAME"
+  ttl     = "300"
+  records = [aws_cloudfront_distribution.frontend.domain_name]
 
-  alias {
-    name                   = aws_cloudfront_distribution.frontend.domain_name
-    zone_id                = aws_cloudfront_distribution.frontend.hosted_zone_id
-    evaluate_target_health = false
-  }
-
-  depends_on = [aws_acm_certificate.frontend_cert]
+  depends_on = [aws_acm_certificate_validation.frontend_cert_validation]
 }
