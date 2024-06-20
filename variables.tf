@@ -33,8 +33,3 @@ variable "cache_policy" {
   type        = string
   default     = "Managed-CachingOptimized" #or "Managed-CachingDisabled"
 }
-
-# variable "waf_ip_set" {
-#   description = "The name of the SSM parameter that contains the IP set JSON object"
-#   type        = list(string)
-# }

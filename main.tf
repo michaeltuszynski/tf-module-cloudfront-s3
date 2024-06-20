@@ -169,85 +169,115 @@ resource "aws_cloudfront_origin_access_control" "s3_bucket_static_website" {
   signing_protocol                  = "sigv4"
 }
 
-# resource "aws_wafv2_ip_set" "ip_set" {
-#   name               = "${var.project_name}-ip-set"
-#   scope              = "CLOUDFRONT"
-#   ip_address_version = "IPV4"
-#   addresses          = ["203.0.113.0/24"]
-# }
 
-# resource "aws_wafv2_web_acl" "web_acl" {
-#   name        = "${var.project_name}-web-acl"
-#   scope       = "CLOUDFRONT"
-#   description = "WAF web ACL"
-#   default_action {
-#     allow {}
-#   }
+resource "aws_wafv2_web_acl" "basic_protection" {
+  name        = "${var.project_name}-web-acl"
+  description = "Default settings from AWS WAFv2"
+  scope       = "CLOUDFRONT"
+  default_action {
+    allow {}
+  }
 
-#   # rule {
-#   #   name     = "IPSetRule"
-#   #   priority = 0
-#   #   action {
-#   #     block {}
-#   #   }
-#   #   statement {
-#   #     ip_set_reference_statement {
-#   #       arn = aws_wafv2_ip_set.ip_set.arn
-#   #     }
-#   #   }
-#   #   visibility_config {
-#   #     cloudwatch_metrics_enabled = true
-#   #     metric_name                = "IPSetRule"
-#   #     sampled_requests_enabled   = true
-#   #   }
-#   # }
+  visibility_config {
+    cloudwatch_metrics_enabled = true
+    metric_name                = "web-acl-metrics"
+    sampled_requests_enabled   = true
+  }
 
-#   rule {
-#     name     = "AWS-AWSManagedRulesSQLiRuleSet"
-#     priority = 1
-#     override_action {
-#       none {}
-#     }
-#     statement {
-#       managed_rule_group_statement {
-#         vendor_name = "AWS"
-#         name        = "AWSManagedRulesSQLiRuleSet"
-#       }
-#     }
-#     visibility_config {
-#       sampled_requests_enabled   = true
-#       cloudwatch_metrics_enabled = true
-#       metric_name                = "AWSManagedRulesSQLiRuleSet"
-#     }
-#   }
+  rule {
+    name     = "AWS-AWSManagedRulesAmazonIpReputationList"
+    priority = 0
 
-#   rule {
-#     name     = "AWS-AWSManagedRulesXSSRuleSet"
-#     priority = 2
-#     override_action {
-#       none {}
-#     }
-#     statement {
-#       managed_rule_group_statement {
-#         vendor_name = "AWS"
-#         name        = "AWSManagedRulesXSSRuleSet"
-#       }
-#     }
-#     visibility_config {
-#       sampled_requests_enabled   = true
-#       cloudwatch_metrics_enabled = true
-#       metric_name                = "AWSManagedRulesXSSRuleSet"
-#     }
-#   }
+    statement {
+      managed_rule_group_statement {
+        name        = "AWSManagedRulesAmazonIpReputationList"
+        vendor_name = "AWS"
+      }
+    }
 
-#   visibility_config {
-#     cloudwatch_metrics_enabled = true
-#     metric_name                = "WebACL"
-#     sampled_requests_enabled   = true
-#   }
+    override_action {
+      none {}
+    }
 
-# }
+    visibility_config {
+      cloudwatch_metrics_enabled = true
+      metric_name                = "AWS-AWSManagedRulesAmazonIpReputationList"
+      sampled_requests_enabled   = true
+    }
+  }
 
+  rule {
+    name     = "AWS-AWSManagedRulesCommonRuleSet"
+    priority = 1
+
+    statement {
+      managed_rule_group_statement {
+        name        = "AWSManagedRulesCommonRuleSet"
+        vendor_name = "AWS"
+      }
+    }
+
+    override_action {
+      none {}
+    }
+
+    visibility_config {
+      cloudwatch_metrics_enabled = true
+      metric_name                = "AWS-AWSManagedRulesCommonRuleSet"
+      sampled_requests_enabled   = true
+    }
+  }
+
+  rule {
+    name     = "AWS-AWSManagedRulesKnownBadInputsRuleSet"
+    priority = 2
+
+    statement {
+      managed_rule_group_statement {
+        name        = "AWSManagedRulesKnownBadInputsRuleSet"
+        vendor_name = "AWS"
+      }
+    }
+
+    override_action {
+      none {}
+    }
+
+    visibility_config {
+      cloudwatch_metrics_enabled = true
+      metric_name                = "AWS-AWSManagedRulesKnownBadInputsRuleSet"
+      sampled_requests_enabled   = true
+    }
+  }
+
+  rule {
+    name     = "AWS-AWSManagedRulesBotControlRuleSet"
+    priority = 3
+
+    statement {
+      managed_rule_group_statement {
+        name        = "AWSManagedRulesBotControlRuleSet"
+        vendor_name = "AWS"
+
+        managed_rule_group_configs {
+          aws_managed_rules_bot_control_rule_set {
+            inspection_level = "COMMON"
+          }
+        }
+      }
+    }
+
+    override_action {
+      none {}
+    }
+
+    visibility_config {
+      cloudwatch_metrics_enabled = true
+      metric_name                = "AWS-AWSManagedRulesBotControlRuleSet"
+      sampled_requests_enabled   = true
+    }
+  }
+}
 
 resource "aws_cloudfront_distribution" "frontend" {
   enabled             = true
@@ -258,7 +288,7 @@ resource "aws_cloudfront_distribution" "frontend" {
   wait_for_deployment = false
   comment             = "S3 bucket distribution"
   default_root_object = "index.html"
-  #web_acl_id          = aws_wafv2_web_acl.web_acl.id
+  web_acl_id          = aws_wafv2_web_acl.basic_protection.id
 
   aliases = ["www.${var.frontend_domain_name}", "${var.frontend_domain_name}"]
 

@@ -9,7 +9,6 @@ module "cloudfront_s3" {
   min_ttl              = 0
   max_ttl              = 0
   default_ttl          = 0
-  cache_policy         = "Managed-CachingOptimized"
-  waf_ips              = ["1.2.3.4", "4.5.6.7"]  #optional
+  cache_policy         = "Managed-CachingOptimized"  #or "Managed-CachingDisabled"
 }
 ```
