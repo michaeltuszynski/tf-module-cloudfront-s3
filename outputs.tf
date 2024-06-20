@@ -5,3 +5,7 @@ output "s3_bucket_static_website" {
 output "domain_url" {
   value = aws_cloudfront_distribution.frontend.domain_name
 }
+
+output "distribution_id" {
+  value = aws_cloudfront_distribution.frontend.id
+}
