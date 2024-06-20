@@ -112,31 +112,42 @@ resource "aws_s3_bucket_acl" "cw_bucket_acl" {
   acl    = "log-delivery-write"
 }
 
-data "aws_iam_policy_document" "s3_policy_cw" {
-  statement {
-    actions = [
-      "s3:GetObject",
-      "s3:PutObject",
-      "s3:ListBucket"
+resource "aws_iam_policy" "cloudfront_s3_logging_policy" {
+  name        = "cloudfront_s3_logging_policy"
+  description = "Policy for allowing CloudFront to write logs to S3 bucket"
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Action = [
+          "s3:GetObject",
+          "s3:PutObject",
+          "s3:ListBucket",
+          "s3:GetBucketAcl"
+        ],
+        Effect = "Allow",
+        Resource = [
+          "${aws_s3_bucket.frontend_bucket_cwlogs.arn}",
+          "${aws_s3_bucket.frontend_bucket_cwlogs.arn}/*"
+        ],
+        Principal = {
+          Service = "cloudfront.amazonaws.com"
+        },
+        Condition = {
+          ArnEquals = {
+            "aws:SourceArn" = "${aws_cloudfront_distribution.frontend.arn}"
+          }
+        }
+      }
     ]
-    resources = ["${aws_s3_bucket.frontend_bucket_cwlogs.arn}/*"]
-
-    principals {
-      type        = "Service"
-      identifiers = ["cloudfront.amazonaws.com"]
-    }
-
-    condition {
-      test     = "StringEquals"
-      variable = "aws:SourceArn"
-      values   = [aws_cloudfront_distribution.frontend.arn]
-    }
-  }
+  })
 }
+
 
 resource "aws_s3_bucket_policy" "bucket_policy_cw" {
   bucket = aws_s3_bucket.frontend_bucket_cwlogs.id
-  policy = data.aws_iam_policy_document.s3_policy_cw.json
+  policy = aws_iam_policy.cloudfront_s3_logging_policy.policy
 }
 
 #Certificate
