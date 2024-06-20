@@ -251,6 +251,8 @@ resource "aws_wafv2_web_acl" "web_acl" {
     metric_name                = "WebACL"
     sampled_requests_enabled   = true
   }
+
+  depends_on = [aws_wafv2_ip_set.ip_set]
 }
 
 
