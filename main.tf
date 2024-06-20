@@ -147,6 +147,18 @@ resource "aws_s3_bucket_policy" "bucket_policy_cw" {
 resource "aws_acm_certificate" "frontend_cert" {
   domain_name       = var.frontend_domain_name
   validation_method = "DNS"
+
+  subject_alternative_names = [
+    "www.${var.frontend_domain_name}", "${var.frontend_domain_name}", "*.${var.frontend_domain_name}"
+  ]
+
+  tags = {
+    Type = "Frontend ACM Certificate"
+  }
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 resource "aws_route53_record" "frontend_cert_validation" {
