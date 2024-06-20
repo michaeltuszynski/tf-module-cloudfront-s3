@@ -28,6 +28,20 @@ resource "aws_s3_bucket" "frontend_bucket" {
   force_destroy = true
 }
 
+resource "aws_s3_bucket_ownership_controls" "frontend_bucket_ownership" {
+  bucket = aws_s3_bucket.frontend_bucket.id
+  rule {
+    object_ownership = "BucketOwnerPreferred"
+  }
+}
+
+resource "aws_s3_bucket_acl" "frontend_bucket_acl" {
+  depends_on = [aws_s3_bucket_ownership_controls.frontend_bucket_ownership]
+
+  bucket = aws_s3_bucket.frontend_bucket.id
+  acl    = "private"
+}
+
 resource "aws_s3_bucket_versioning" "frontend_bucket_versioning" {
   bucket = aws_s3_bucket.frontend_bucket.id
   versioning_configuration {
@@ -82,6 +96,20 @@ resource "aws_s3_bucket_versioning" "cw_bucket_versioning" {
     status = "Disabled"
   }
   mfa = "Disabled"
+}
+
+resource "aws_s3_bucket_ownership_controls" "cw_bucket_ownership" {
+  bucket = aws_s3_bucket.frontend_bucket_cwlogs.id
+  rule {
+    object_ownership = "BucketOwnerPreferred"
+  }
+}
+
+resource "aws_s3_bucket_acl" "cw_bucket_acl" {
+  depends_on = [aws_s3_bucket_ownership_controls.cw_bucket_ownership]
+
+  bucket = aws_s3_bucket.frontend_bucket_cwlogs.id
+  acl    = "log-delivery-write"
 }
 
 data "aws_iam_policy_document" "s3_policy_cw" {
