@@ -272,9 +272,13 @@ resource "aws_cloudfront_distribution" "frontend" {
 resource "aws_route53_record" "frontend" {
   zone_id = var.hosted_zone_id
   name    = var.frontend_domain_name
-  type    = "CNAME"
-  ttl     = "300"
-  records = [aws_cloudfront_distribution.frontend.domain_name]
+  type    = "A"
 
-  //depends_on = [aws_acm_certificate_validation.frontend_cert_validation]
+  alias {
+    name                   = aws_cloudfront_distribution.frontend.domain_name
+    zone_id                = aws_cloudfront_distribution.frontend.hosted_zone_id
+    evaluate_target_health = false
+  }
+
+  #depends_on = [aws_acm_certificate_validation.frontend_cert_validation]
 }
