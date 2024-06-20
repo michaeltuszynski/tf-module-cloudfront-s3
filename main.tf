@@ -180,7 +180,6 @@ resource "null_resource" "import_existing_record" {
   }
 }
 
-
 resource "aws_route53_record" "frontend_cert_validation" {
   for_each = {
     for dvo in aws_acm_certificate.frontend_cert.domain_validation_options : dvo.domain_name => {
