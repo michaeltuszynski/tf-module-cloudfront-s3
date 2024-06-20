@@ -176,77 +176,77 @@ resource "aws_cloudfront_origin_access_control" "s3_bucket_static_website" {
 #   addresses          = ["203.0.113.0/24"]
 # }
 
-resource "aws_wafv2_web_acl" "web_acl" {
-  name        = "${var.project_name}-web-acl"
-  scope       = "CLOUDFRONT"
-  description = "WAF web ACL"
-  default_action {
-    allow {}
-  }
+# resource "aws_wafv2_web_acl" "web_acl" {
+#   name        = "${var.project_name}-web-acl"
+#   scope       = "CLOUDFRONT"
+#   description = "WAF web ACL"
+#   default_action {
+#     allow {}
+#   }
 
-  # rule {
-  #   name     = "IPSetRule"
-  #   priority = 0
-  #   action {
-  #     block {}
-  #   }
-  #   statement {
-  #     ip_set_reference_statement {
-  #       arn = aws_wafv2_ip_set.ip_set.arn
-  #     }
-  #   }
-  #   visibility_config {
-  #     cloudwatch_metrics_enabled = true
-  #     metric_name                = "IPSetRule"
-  #     sampled_requests_enabled   = true
-  #   }
-  # }
+#   # rule {
+#   #   name     = "IPSetRule"
+#   #   priority = 0
+#   #   action {
+#   #     block {}
+#   #   }
+#   #   statement {
+#   #     ip_set_reference_statement {
+#   #       arn = aws_wafv2_ip_set.ip_set.arn
+#   #     }
+#   #   }
+#   #   visibility_config {
+#   #     cloudwatch_metrics_enabled = true
+#   #     metric_name                = "IPSetRule"
+#   #     sampled_requests_enabled   = true
+#   #   }
+#   # }
 
-  rule {
-    name     = "AWS-AWSManagedRulesSQLiRuleSet"
-    priority = 1
-    override_action {
-      none {}
-    }
-    statement {
-      managed_rule_group_statement {
-        vendor_name = "AWS"
-        name        = "AWSManagedRulesSQLiRuleSet"
-      }
-    }
-    visibility_config {
-      sampled_requests_enabled   = true
-      cloudwatch_metrics_enabled = true
-      metric_name                = "AWSManagedRulesSQLiRuleSet"
-    }
-  }
+#   rule {
+#     name     = "AWS-AWSManagedRulesSQLiRuleSet"
+#     priority = 1
+#     override_action {
+#       none {}
+#     }
+#     statement {
+#       managed_rule_group_statement {
+#         vendor_name = "AWS"
+#         name        = "AWSManagedRulesSQLiRuleSet"
+#       }
+#     }
+#     visibility_config {
+#       sampled_requests_enabled   = true
+#       cloudwatch_metrics_enabled = true
+#       metric_name                = "AWSManagedRulesSQLiRuleSet"
+#     }
+#   }
 
-  rule {
-    name     = "AWS-AWSManagedRulesXSSRuleSet"
-    priority = 2
-    override_action {
-      none {}
-    }
-    statement {
-      managed_rule_group_statement {
-        vendor_name = "AWS"
-        name        = "AWSManagedRulesXSSRuleSet"
-      }
-    }
-    visibility_config {
-      sampled_requests_enabled   = true
-      cloudwatch_metrics_enabled = true
-      metric_name                = "AWSManagedRulesXSSRuleSet"
-    }
-  }
+#   rule {
+#     name     = "AWS-AWSManagedRulesXSSRuleSet"
+#     priority = 2
+#     override_action {
+#       none {}
+#     }
+#     statement {
+#       managed_rule_group_statement {
+#         vendor_name = "AWS"
+#         name        = "AWSManagedRulesXSSRuleSet"
+#       }
+#     }
+#     visibility_config {
+#       sampled_requests_enabled   = true
+#       cloudwatch_metrics_enabled = true
+#       metric_name                = "AWSManagedRulesXSSRuleSet"
+#     }
+#   }
 
-  visibility_config {
-    cloudwatch_metrics_enabled = true
-    metric_name                = "WebACL"
-    sampled_requests_enabled   = true
-  }
+#   visibility_config {
+#     cloudwatch_metrics_enabled = true
+#     metric_name                = "WebACL"
+#     sampled_requests_enabled   = true
+#   }
 
-}
+# }
 
 
 resource "aws_cloudfront_distribution" "frontend" {
@@ -258,7 +258,7 @@ resource "aws_cloudfront_distribution" "frontend" {
   wait_for_deployment = false
   comment             = "S3 bucket distribution"
   default_root_object = "index.html"
-  web_acl_id          = aws_wafv2_web_acl.web_acl.id
+  #web_acl_id          = aws_wafv2_web_acl.web_acl.id
 
   aliases = ["www.${var.frontend_domain_name}", "${var.frontend_domain_name}"]
 
