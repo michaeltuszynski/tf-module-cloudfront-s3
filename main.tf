@@ -161,49 +161,49 @@ resource "aws_acm_certificate" "frontend_cert" {
   }
 }
 
-resource "null_resource" "import_existing_record" {
-  for_each = {
-    for dvo in aws_acm_certificate.frontend_cert.domain_validation_options : dvo.domain_name => {
-      name   = dvo.resource_record_name
-      record = dvo.resource_record_value
-      type   = dvo.resource_record_type
-    }
-  }
+# resource "null_resource" "import_existing_record" {
+#   for_each = {
+#     for dvo in aws_acm_certificate.frontend_cert.domain_validation_options : dvo.domain_name => {
+#       name   = dvo.resource_record_name
+#       record = dvo.resource_record_value
+#       type   = dvo.resource_record_type
+#     }
+#   }
 
-  provisioner "local-exec" {
-    when    = create
-    command = <<EOT
-      if aws route53 list-resource-record-sets --hosted-zone-id ${var.hosted_zone_id} --query "ResourceRecordSets[?Name == '${each.value.name}.'] | [0]" | grep -q '"Name":'; then
-        terraform import aws_route53_record.frontend_cert_validation["${each.key}"] ${var.hosted_zone_id}_${each.value.name}
-      fi
-    EOT
-  }
-}
+#   provisioner "local-exec" {
+#     when    = create
+#     command = <<EOT
+#       if aws route53 list-resource-record-sets --hosted-zone-id ${var.hosted_zone_id} --query "ResourceRecordSets[?Name == '${each.value.name}.'] | [0]" | grep -q '"Name":'; then
+#         terraform import aws_route53_record.frontend_cert_validation["${each.key}"] ${var.hosted_zone_id}_${each.value.name}
+#       fi
+#     EOT
+#   }
+# }
 
-resource "aws_route53_record" "frontend_cert_validation" {
-  for_each = {
-    for dvo in aws_acm_certificate.frontend_cert.domain_validation_options : dvo.domain_name => {
-      name   = dvo.resource_record_name
-      record = dvo.resource_record_value
-      type   = dvo.resource_record_type
-    }
-  }
+# resource "aws_route53_record" "frontend_cert_validation" {
+#   for_each = {
+#     for dvo in aws_acm_certificate.frontend_cert.domain_validation_options : dvo.domain_name => {
+#       name   = dvo.resource_record_name
+#       record = dvo.resource_record_value
+#       type   = dvo.resource_record_type
+#     }
+#   }
 
-  name    = each.value.name
-  records = [each.value.record]
-  ttl     = 60
-  type    = each.value.type
-  zone_id = var.hosted_zone_id
+#   name    = each.value.name
+#   records = [each.value.record]
+#   ttl     = 60
+#   type    = each.value.type
+#   zone_id = var.hosted_zone_id
 
-  lifecycle {
-    create_before_destroy = true
-  }
-}
+#   lifecycle {
+#     create_before_destroy = true
+#   }
+# }
 
-resource "aws_acm_certificate_validation" "frontend_cert_validation" {
-  certificate_arn         = aws_acm_certificate.frontend_cert.arn
-  validation_record_fqdns = [for record in aws_route53_record.frontend_cert_validation : record.fqdn]
-}
+# resource "aws_acm_certificate_validation" "frontend_cert_validation" {
+#   certificate_arn         = aws_acm_certificate.frontend_cert.arn
+#   validation_record_fqdns = [for record in aws_route53_record.frontend_cert_validation : record.fqdn]
+# }
 
 resource "aws_cloudfront_origin_access_control" "s3_bucket_static_website" {
   name                              = "Managed-S3OriginPolicy"
