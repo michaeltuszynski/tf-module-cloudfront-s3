@@ -34,8 +34,7 @@ variable "cache_policy" {
   default     = "Managed-CachingOptimized" #or "Managed-CachingDisabled"
 }
 
-variable "waf_ips" {
-  description = "Name of the WAF IP set"
+variable "waf_ip_set" {
+  description = "The name of the SSM parameter that contains the IP set JSON object"
   type        = list(string)
-  default     = []
 }

@@ -169,14 +169,11 @@ resource "aws_cloudfront_origin_access_control" "s3_bucket_static_website" {
   signing_protocol                  = "sigv4"
 }
 
-
-
 resource "aws_wafv2_ip_set" "ip_set" {
-  count              = length(var.waf_ips) > 0 ? 1 : 0
   name               = "${var.project_name}-ip-set"
   scope              = "CLOUDFRONT"
   ip_address_version = "IPV4"
-  addresses          = var.waf_ips
+  addresses          = var.waf_ip_set
 }
 
 resource "aws_wafv2_web_acl" "web_acl" {
@@ -187,26 +184,23 @@ resource "aws_wafv2_web_acl" "web_acl" {
     allow {}
   }
 
-  # dynamic "rule" {
-  #   for_each = length(var.waf_ips) > 0 ? [aws_wafv2_ip_set.ip_set[0]] : []
-  #   content {
-  #     name     = "IPSetRule"
-  #     priority = 0
-  #     action {
-  #       block {}
-  #     }
-  #     statement {
-  #       ip_set_reference_statement {
-  #         arn = rule.value.arn
-  #       }
-  #     }
-  #     visibility_config {
-  #       cloudwatch_metrics_enabled = true
-  #       metric_name                = "IPSetRule"
-  #       sampled_requests_enabled   = true
-  #     }
-  #   }
-  # }
+  rule {
+    name     = "IPSetRule"
+    priority = 0
+    action {
+      block {}
+    }
+    statement {
+      ip_set_reference_statement {
+        arn = aws_wafv2_ip_set.ip_set.arn
+      }
+    }
+    visibility_config {
+      cloudwatch_metrics_enabled = true
+      metric_name                = "IPSetRule"
+      sampled_requests_enabled   = true
+    }
+  }
 
   rule {
     name     = "AWS-AWSManagedRulesSQLiRuleSet"
