@@ -187,26 +187,26 @@ resource "aws_wafv2_web_acl" "web_acl" {
     allow {}
   }
 
-  dynamic "rule" {
-    for_each = length(var.waf_ips) > 0 ? [aws_wafv2_ip_set.ip_set[0]] : []
-    content {
-      name     = "IPSetRule"
-      priority = 0
-      action {
-        block {}
-      }
-      statement {
-        ip_set_reference_statement {
-          arn = rule.value.arn
-        }
-      }
-      visibility_config {
-        cloudwatch_metrics_enabled = true
-        metric_name                = "IPSetRule"
-        sampled_requests_enabled   = true
-      }
-    }
-  }
+  # dynamic "rule" {
+  #   for_each = length(var.waf_ips) > 0 ? [aws_wafv2_ip_set.ip_set[0]] : []
+  #   content {
+  #     name     = "IPSetRule"
+  #     priority = 0
+  #     action {
+  #       block {}
+  #     }
+  #     statement {
+  #       ip_set_reference_statement {
+  #         arn = rule.value.arn
+  #       }
+  #     }
+  #     visibility_config {
+  #       cloudwatch_metrics_enabled = true
+  #       metric_name                = "IPSetRule"
+  #       sampled_requests_enabled   = true
+  #     }
+  #   }
+  # }
 
   rule {
     name     = "AWS-AWSManagedRulesSQLiRuleSet"
@@ -252,7 +252,6 @@ resource "aws_wafv2_web_acl" "web_acl" {
     sampled_requests_enabled   = true
   }
 
-  depends_on = [aws_wafv2_ip_set.ip_set]
 }
 
 
