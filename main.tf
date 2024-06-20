@@ -161,50 +161,6 @@ resource "aws_acm_certificate" "frontend_cert" {
   }
 }
 
-# resource "null_resource" "import_existing_record" {
-#   for_each = {
-#     for dvo in aws_acm_certificate.frontend_cert.domain_validation_options : dvo.domain_name => {
-#       name   = dvo.resource_record_name
-#       record = dvo.resource_record_value
-#       type   = dvo.resource_record_type
-#     }
-#   }
-
-#   provisioner "local-exec" {
-#     when    = create
-#     command = <<EOT
-#       if aws route53 list-resource-record-sets --hosted-zone-id ${var.hosted_zone_id} --query "ResourceRecordSets[?Name == '${each.value.name}.'] | [0]" | grep -q '"Name":'; then
-#         terraform import aws_route53_record.frontend_cert_validation["${each.key}"] ${var.hosted_zone_id}_${each.value.name}
-#       fi
-#     EOT
-#   }
-# }
-
-# resource "aws_route53_record" "frontend_cert_validation" {
-#   for_each = {
-#     for dvo in aws_acm_certificate.frontend_cert.domain_validation_options : dvo.domain_name => {
-#       name   = dvo.resource_record_name
-#       record = dvo.resource_record_value
-#       type   = dvo.resource_record_type
-#     }
-#   }
-
-#   name    = each.value.name
-#   records = [each.value.record]
-#   ttl     = 60
-#   type    = each.value.type
-#   zone_id = var.hosted_zone_id
-
-#   lifecycle {
-#     create_before_destroy = true
-#   }
-# }
-
-# resource "aws_acm_certificate_validation" "frontend_cert_validation" {
-#   certificate_arn         = aws_acm_certificate.frontend_cert.arn
-#   validation_record_fqdns = [for record in aws_route53_record.frontend_cert_validation : record.fqdn]
-# }
-
 resource "aws_cloudfront_origin_access_control" "s3_bucket_static_website" {
   name                              = "Managed-S3OriginPolicy"
   description                       = "Managed policy for S3 origin access"
@@ -212,6 +168,70 @@ resource "aws_cloudfront_origin_access_control" "s3_bucket_static_website" {
   signing_behavior                  = "always"
   signing_protocol                  = "sigv4"
 }
+
+
+
+resource "aws_wafv2_ip_set" "ip_set" {
+  count              = length(var.waf_ips) > 0 ? 1 : 0
+  name               = "${var.project_name}-ip-set"
+  scope              = "CLOUDFRONT"
+  ip_address_version = "IPV4"
+  addresses          = var.waf_ips
+}
+
+resource "aws_wafv2_web_acl" "web_acl" {
+  name        = "${var.project_name}-web-acl"
+  scope       = "CLOUDFRONT"
+  description = "WAF web ACL"
+  default_action {
+    allow {}
+  }
+
+  rule {
+    name     = "AWS-AWSManagedRulesSQLiRuleSet"
+    priority = 1
+    override_action {
+      none {}
+    }
+    statement {
+      managed_rule_group_statement {
+        vendor_name = "AWS"
+        name        = "AWSManagedRulesSQLiRuleSet"
+      }
+    }
+    visibility_config {
+      sampled_requests_enabled   = true
+      cloudwatch_metrics_enabled = true
+      metric_name                = "AWSManagedRulesSQLiRuleSet"
+    }
+  }
+
+  rule {
+    name     = "AWS-AWSManagedRulesXSSRuleSet"
+    priority = 2
+    override_action {
+      none {}
+    }
+    statement {
+      managed_rule_group_statement {
+        vendor_name = "AWS"
+        name        = "AWSManagedRulesXSSRuleSet"
+      }
+    }
+    visibility_config {
+      sampled_requests_enabled   = true
+      cloudwatch_metrics_enabled = true
+      metric_name                = "AWSManagedRulesXSSRuleSet"
+    }
+  }
+
+  visibility_config {
+    cloudwatch_metrics_enabled = true
+    metric_name                = "WebACL"
+    sampled_requests_enabled   = true
+  }
+}
+
 
 resource "aws_cloudfront_distribution" "frontend" {
   enabled             = true
@@ -222,6 +242,7 @@ resource "aws_cloudfront_distribution" "frontend" {
   wait_for_deployment = false
   comment             = "S3 bucket distribution"
   default_root_object = "index.html"
+  web_acl_id          = aws_wafv2_web_acl.web_acl.id
 
   aliases = ["www.${var.frontend_domain_name}", "${var.frontend_domain_name}"]
 
@@ -279,6 +300,4 @@ resource "aws_route53_record" "frontend" {
     zone_id                = aws_cloudfront_distribution.frontend.hosted_zone_id
     evaluate_target_health = false
   }
-
-  #depends_on = [aws_acm_certificate_validation.frontend_cert_validation]
 }

@@ -33,3 +33,8 @@ variable "cache_policy" {
   type        = string
   default     = "Managed-CachingOptimized" #or "Managed-CachingDisabled"
 }
+
+variable "waf_ips" {
+  description = "Name of the WAF IP set"
+  type        = list(string)
+}
