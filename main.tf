@@ -276,5 +276,5 @@ resource "aws_route53_record" "frontend" {
   ttl     = "300"
   records = [aws_cloudfront_distribution.frontend.domain_name]
 
-  depends_on = [aws_acm_certificate_validation.frontend_cert_validation]
+  //depends_on = [aws_acm_certificate_validation.frontend_cert_validation]
 }
