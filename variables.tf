@@ -37,4 +37,5 @@ variable "cache_policy" {
 variable "waf_ips" {
   description = "Name of the WAF IP set"
   type        = list(string)
+  default     = []
 }
