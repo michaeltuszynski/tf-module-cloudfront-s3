@@ -288,7 +288,7 @@ resource "aws_cloudfront_distribution" "frontend" {
   wait_for_deployment = false
   comment             = "S3 bucket distribution"
   default_root_object = "index.html"
-  web_acl_id          = aws_wafv2_web_acl.basic_protection.id
+  web_acl_id          = aws_wafv2_web_acl.basic_protection.arn
 
   aliases = ["www.${var.frontend_domain_name}", "${var.frontend_domain_name}"]
 
