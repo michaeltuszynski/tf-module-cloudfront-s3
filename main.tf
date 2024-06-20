@@ -169,12 +169,12 @@ resource "aws_cloudfront_origin_access_control" "s3_bucket_static_website" {
   signing_protocol                  = "sigv4"
 }
 
-resource "aws_wafv2_ip_set" "ip_set" {
-  name               = "${var.project_name}-ip-set"
-  scope              = "CLOUDFRONT"
-  ip_address_version = "IPV4"
-  addresses          = ["203.0.113.0/24"]
-}
+# resource "aws_wafv2_ip_set" "ip_set" {
+#   name               = "${var.project_name}-ip-set"
+#   scope              = "CLOUDFRONT"
+#   ip_address_version = "IPV4"
+#   addresses          = ["203.0.113.0/24"]
+# }
 
 resource "aws_wafv2_web_acl" "web_acl" {
   name        = "${var.project_name}-web-acl"
@@ -184,23 +184,23 @@ resource "aws_wafv2_web_acl" "web_acl" {
     allow {}
   }
 
-  rule {
-    name     = "IPSetRule"
-    priority = 0
-    action {
-      block {}
-    }
-    statement {
-      ip_set_reference_statement {
-        arn = aws_wafv2_ip_set.ip_set.arn
-      }
-    }
-    visibility_config {
-      cloudwatch_metrics_enabled = true
-      metric_name                = "IPSetRule"
-      sampled_requests_enabled   = true
-    }
-  }
+  # rule {
+  #   name     = "IPSetRule"
+  #   priority = 0
+  #   action {
+  #     block {}
+  #   }
+  #   statement {
+  #     ip_set_reference_statement {
+  #       arn = aws_wafv2_ip_set.ip_set.arn
+  #     }
+  #   }
+  #   visibility_config {
+  #     cloudwatch_metrics_enabled = true
+  #     metric_name                = "IPSetRule"
+  #     sampled_requests_enabled   = true
+  #   }
+  # }
 
   rule {
     name     = "AWS-AWSManagedRulesSQLiRuleSet"
