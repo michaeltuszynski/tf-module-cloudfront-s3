@@ -184,23 +184,23 @@ resource "aws_wafv2_web_acl" "web_acl" {
     allow {}
   }
 
-  rule {
-    name     = "IPSetRule"
-    priority = 0
-    action {
-      block {}
-    }
-    statement {
-      ip_set_reference_statement {
-        arn = aws_wafv2_ip_set.ip_set.arn
-      }
-    }
-    visibility_config {
-      cloudwatch_metrics_enabled = true
-      metric_name                = "IPSetRule"
-      sampled_requests_enabled   = true
-    }
-  }
+  # rule {
+  #   name     = "IPSetRule"
+  #   priority = 0
+  #   action {
+  #     block {}
+  #   }
+  #   statement {
+  #     ip_set_reference_statement {
+  #       arn = aws_wafv2_ip_set.ip_set.arn
+  #     }
+  #   }
+  #   visibility_config {
+  #     cloudwatch_metrics_enabled = true
+  #     metric_name                = "IPSetRule"
+  #     sampled_requests_enabled   = true
+  #   }
+  # }
 
   rule {
     name     = "AWS-AWSManagedRulesSQLiRuleSet"
