@@ -1,4 +1,4 @@
-output "s3_bucket_static_website" {
+output "s3_bucket_id" {
   value = aws_s3_bucket.frontend_bucket.id
 }
 
