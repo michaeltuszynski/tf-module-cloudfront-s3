@@ -2,7 +2,7 @@
 
 ```hcl
 module "cloudfront_s3" {
-  source               = "git::https://github.com/harmonate/tf-module-cloudfront-s3.git?ref=main"
+  source               = "git::https://github.com/michaeltuszynski/tf-module-cloudfront-s3.git?ref=main"
   project_name         = var.project_name
   frontend_domain_name = local.frontend_domain_name
   hosted_zone_id       = var.hosted_zone_id
